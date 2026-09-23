@@ -1,8 +1,43 @@
 import pandas as pd
+import re
+
+# Keywords that flag a column as an ID / phone number column.
+_ID_PHONE_KEYWORDS = re.compile(
+    r'(\bid\b|\bids\b|phone|mobile|msisdn|number|account|reference|ref)',
+    re.IGNORECASE
+)
+
+
+def coerce_id_phone_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """Convert ID / phone-number-like columns to clean strings.
+
+    Prevents pandas from storing them as float64, which causes scientific-
+    notation display (e.g. 2.56789e+11) in both Streamlit dataframes and
+    the exported Excel workbooks.
+
+    Rules applied per matching column:
+    - NaN values become an empty string.
+    - Values that look like whole numbers (e.g. 254712345678.0) have the
+      trailing '.0' stripped so they read as '254712345678'.
+    """
+    df = df.copy()
+    for col in df.columns:
+        if _ID_PHONE_KEYWORDS.search(str(col)):
+            def _clean(v):
+                if pd.isna(v):
+                    return ''
+                s = str(v)
+                # strip trailing .0 that pandas adds when int-stored-as-float
+                if s.endswith('.0') and s[:-2].lstrip('-').isdigit():
+                    s = s[:-2]
+                return s
+            df[col] = df[col].apply(_clean)
+    return df
+
 
 def process_recon_data(raw_df: pd.DataFrame):
     """Cleans data, applies filters, and computes summary metrics and report subsets."""
-    df = raw_df.copy()
+    df = coerce_id_phone_columns(raw_df).copy()
 
     # Standardize string flags
     df['In Xchange'] = df['In Xchange'].astype(str).str.upper().str.strip()
