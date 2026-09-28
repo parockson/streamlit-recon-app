@@ -66,10 +66,11 @@ def process_recon_data(raw_df: pd.DataFrame):
     }
 
     # Detailed Transaction Reports
-    target_cols = ['Date Created', 'Transaction ID', 'Xchange Status', 'External Status', 'Xchange Amount', 'External Amount']
+    target_cols = ['Date Created', 'Transaction ID', 'Phone', 'Xchange Status', 'External Status', 'Xchange Amount', 'External Amount']
     col_rename = {
         'Date Created': 'Date',
         'Transaction ID': 'Id',
+        'Phone': 'phone',
         'Xchange Status': 'exchange status',
         'External Status': 'external status',
         'Xchange Amount': 'xchange amt',
